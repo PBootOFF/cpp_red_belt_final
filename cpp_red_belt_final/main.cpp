@@ -201,6 +201,57 @@ void TestBasicSearch() {
 	TestFunctionality(docs, queries, expected);
 }
 
+bool ReadFileContent(string fileName, vector<string> & vecOfStrs)
+{
+
+	// Open the File
+	ifstream in(fileName.c_str());
+
+	// Check if object is valid
+	if (!in)
+	{
+		cerr << "Cannot open the File : " << fileName << endl;
+		return false;
+	}
+
+	string str;
+	// Read the next line from File untill it reaches the end.
+	while (getline(in, str))
+	{
+		// Line contains string of length > 0 then save it in vector
+		if (str.size() > 0)
+			vecOfStrs.push_back(str);
+	}
+	//Close The File
+	in.close();
+	return true;
+}
+
+void TestTime() {
+	vector<string> docs;
+	ReadFileContent("doc.txt", docs);
+
+	const vector<string> queries = {
+		"we need some help",
+		"it",
+		"i love this game",
+		"tell me why",
+		"dislike",
+		"about"
+	};
+
+	const vector<string> expected = {
+	"london: {docid: 0, hitcount: 1}",
+		Join(' ', vector{
+		"the:",
+		"{docid: 0, hitcount: 1}",
+		"{docid: 1, hitcount: 1}"
+	})
+	};
+
+	TestFunctionality(docs, queries, expected);
+}
+
 int main() {
 	TestRunner tr;
 	RUN_TEST(tr, TestSerpFormat);
@@ -208,5 +259,6 @@ int main() {
 	RUN_TEST(tr, TestHitcount);
 	RUN_TEST(tr, TestRanking);
 	RUN_TEST(tr, TestBasicSearch);
+	RUN_TEST(tr, TestTime);
 	getchar();
 }

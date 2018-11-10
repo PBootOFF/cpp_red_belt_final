@@ -11,12 +11,16 @@ vector<string> SplitIntoWords(const string& line) {
 	return {istream_iterator<string>(words_input), istream_iterator<string>()};
 }
 
-SearchServer::SearchServer() //:
-	//docs_rating_count_duration("Count docs rating"),	//docs_sort_by_rating_duration("Sort docs by rating"),	//send_search_results_duration("Send search results")
+SearchServer::SearchServer():
+	docs_rating_count_duration("Count docs rating"),
+	docs_sort_by_rating_duration("Sort docs by rating"),
+	send_search_results_duration("Send search results")
 {}
 
-SearchServer::SearchServer(istream& document_input) //: 
-	//docs_rating_count_duration("Count docs rating"),	//docs_sort_by_rating_duration("Sort docs by rating"),	//send_search_results_duration("Send search results")
+SearchServer::SearchServer(istream& document_input): 
+	docs_rating_count_duration("Count docs rating"),
+	docs_sort_by_rating_duration("Sort docs by rating"),
+	send_search_results_duration("Send search results")
 {
 	UpdateDocumentBase(document_input);
 }
@@ -31,37 +35,29 @@ void SearchServer::UpdateDocumentBase(istream& document_input) {
 	index = move(new_index);
 }
 
-vector<size_t> SearchServer::DocsRatingCount(vector<size_t>& docid_count, const vector<string>& words) {
+void SearchServer::DocsRatingCount(vector<pair<size_t, size_t>>& docid_count, const vector<string>& words) {
 	
-	//ADD_DURATION(docs_rating_count_duration);
+	ADD_DURATION(docs_rating_count_duration);
 
-	fill(docid_count.begin(), docid_count.end(), 0);
-	
 	for (const auto& word : words) {
 		for (const size_t docid : index.Lookup(word)) {
-			docid_count[docid]++;
+			docid_count[docid].first = docid;
+			docid_count[docid].second++;
 		}
 	}
-
-	return docid_count;
 	
 }
 
-vector<pair<size_t, size_t>> SearchServer::DocsSortByRating(vector<size_t>& docid_rating_vec) {
+void SearchServer::DocsSortByRating(vector<pair<size_t, size_t>>& docid_count) {
 
-	//ADD_DURATION(docs_sort_by_rating_duration);
+	ADD_DURATION(docs_sort_by_rating_duration);
 
-	vector<pair<size_t, size_t>> sort_results(docid_rating_vec.size());
-	for (int i = 0; i < docid_rating_vec.size(); i++) {
-		sort_results[i] = make_pair(i, docid_rating_vec[i]);
-	}
-
-	auto middle = sort_results.size() > 5 ? sort_results.begin() + 5 : sort_results.end();
+	auto middle = docid_count.size() > 5 ? docid_count.begin() + 5 : docid_count.end();
 
 	partial_sort(
-		begin(sort_results),
+		begin(docid_count),
 		middle,
-		end(sort_results),
+		end(docid_count),
 		[](pair<size_t, size_t> lhs, pair<size_t, size_t> rhs) {
 			int64_t lhs_docid = lhs.first;
 			auto lhs_hit_count = lhs.second;
@@ -71,15 +67,13 @@ vector<pair<size_t, size_t>> SearchServer::DocsSortByRating(vector<size_t>& doci
 		}
 	);
 
-	return sort_results;
-	
 }
 
 void SearchServer::SendSearchResults(string& current_query,
 									 vector<pair<size_t, size_t>>& sorted_docs,
 									 ostream& search_results_output) {
 
-	//ADD_DURATION(send_search_results_duration);
+	ADD_DURATION(send_search_results_duration);
 
 	search_results_output << current_query << ':';
 	for (auto[docid, hitcount] : Head(sorted_docs, 5)) {
@@ -97,14 +91,16 @@ void SearchServer::AddQueriesStream(
 	istream& query_input, ostream& search_results_output
 ) {
 
-	vector<size_t> docid_count(index.GetDocsNum());
+	vector<pair<size_t, size_t>> docid_count(index.GetDocsNum());
 
 	for (string current_query; getline(query_input, current_query); ) {
 
+		fill(docid_count.begin(), docid_count.end(), make_pair(0, 0));
+
 		const auto words = SplitIntoWords(current_query);
 		DocsRatingCount(docid_count, words);
-		vector<pair<size_t, size_t>> sorted_docs = DocsSortByRating(docid_count);
-		SendSearchResults(current_query, sorted_docs, search_results_output);
+		DocsSortByRating(docid_count);
+		SendSearchResults(current_query, docid_count, search_results_output);
 
 	}
 
