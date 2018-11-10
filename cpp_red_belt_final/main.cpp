@@ -1,6 +1,7 @@
 #include "search_server.h"
 #include "parse.h"
 #include "test_runner.h"
+#include "durations.cpp"
 
 #include <algorithm>
 #include <iterator>
@@ -207,4 +208,5 @@ int main() {
 	RUN_TEST(tr, TestHitcount);
 	RUN_TEST(tr, TestRanking);
 	RUN_TEST(tr, TestBasicSearch);
+	getchar();
 }
