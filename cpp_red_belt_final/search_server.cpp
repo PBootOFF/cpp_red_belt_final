@@ -11,16 +11,16 @@ vector<string> SplitIntoWords(const string& line) {
 	return {istream_iterator<string>(words_input), istream_iterator<string>()};
 }
 
-SearchServer::SearchServer():
-	docs_rating_count_duration("Count docs rating"),
-	docs_sort_by_rating_duration("Sort docs by rating"),
-	send_search_results_duration("Send search results")
+SearchServer::SearchServer()//:
+	//docs_rating_count_duration("Count docs rating"),
+	//docs_sort_by_rating_duration("Sort docs by rating"),
+	//send_search_results_duration("Send search results")
 {}
 
-SearchServer::SearchServer(istream& document_input): 
-	docs_rating_count_duration("Count docs rating"),
-	docs_sort_by_rating_duration("Sort docs by rating"),
-	send_search_results_duration("Send search results")
+SearchServer::SearchServer(istream& document_input)//: 
+	//docs_rating_count_duration("Count docs rating"),
+	//docs_sort_by_rating_duration("Sort docs by rating"),
+	//send_search_results_duration("Send search results")
 {
 	UpdateDocumentBase(document_input);
 }
@@ -37,12 +37,12 @@ void SearchServer::UpdateDocumentBase(istream& document_input) {
 
 void SearchServer::DocsRatingCount(vector<pair<size_t, size_t>>& docid_count, const vector<string>& words) {
 	
-	ADD_DURATION(docs_rating_count_duration);
+	//ADD_DURATION(docs_rating_count_duration);
 
 	for (const auto& word : words) {
-		for (const size_t docid : index.Lookup(word)) {
-			docid_count[docid].first = docid;
-			docid_count[docid].second++;
+		for (const pair<size_t, size_t> docid_num : index.Lookup(word)) {
+			docid_count[docid_num.first].first = docid_num.first;
+			docid_count[docid_num.first].second += docid_num.second;
 		}
 	}
 	
@@ -50,7 +50,7 @@ void SearchServer::DocsRatingCount(vector<pair<size_t, size_t>>& docid_count, co
 
 void SearchServer::DocsSortByRating(vector<pair<size_t, size_t>>& docid_count) {
 
-	ADD_DURATION(docs_sort_by_rating_duration);
+	//ADD_DURATION(docs_sort_by_rating_duration);
 
 	auto middle = docid_count.size() > 5 ? docid_count.begin() + 5 : docid_count.end();
 
@@ -73,7 +73,7 @@ void SearchServer::SendSearchResults(string& current_query,
 									 vector<pair<size_t, size_t>>& sorted_docs,
 									 ostream& search_results_output) {
 
-	ADD_DURATION(send_search_results_duration);
+	//ADD_DURATION(send_search_results_duration);
 
 	search_results_output << current_query << ':';
 	for (auto[docid, hitcount] : Head(sorted_docs, 5)) {
@@ -91,11 +91,14 @@ void SearchServer::AddQueriesStream(
 	istream& query_input, ostream& search_results_output
 ) {
 
+	//TotalDuration total_query_duration("Total");
+	//ADD_DURATION(total_query_duration);
+	
 	vector<pair<size_t, size_t>> docid_count(index.GetDocsNum());
 
 	for (string current_query; getline(query_input, current_query); ) {
-
-		fill(docid_count.begin(), docid_count.end(), make_pair(0, 0));
+		
+		docid_count.assign(index.GetDocsNum(), {0, 0});
 
 		const auto words = SplitIntoWords(current_query);
 		DocsRatingCount(docid_count, words);
@@ -107,15 +110,30 @@ void SearchServer::AddQueriesStream(
 }
 
 void InvertedIndex::Add(const string& document) {
+	
 	docs.push_back(document);
-
 	const size_t docid = docs.size() - 1;
+
 	for (const auto& word : SplitIntoWords(document)) {
-		index[word].push_back(docid);
+		if (word_docid_index_map.count(word) == 0) {
+			word_docid_index_map[word][docid] = 0;
+			index[word].push_back({docid, 1});
+		}		
+		else {
+			if (word_docid_index_map[word].count(docid) == 0) {
+				index[word].push_back({ docid, 1 });
+				word_docid_index_map[word][docid] = index[word].size() - 1;
+			}
+			else {
+				size_t docid_index = word_docid_index_map[word][docid];
+				index[word][docid_index].second++;
+			}
+		}
 	}
+
 }
 
-list<size_t> InvertedIndex::Lookup(const string& word) const {
+vector<pair<size_t, size_t>> InvertedIndex::Lookup(const string& word) const {
 	if (auto it = index.find(word); it != index.end()) {
 		return it->second;
 	} else {

@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-#include "durations.cpp"
+//#include "durations.cpp"
 
 using namespace std;
 
@@ -16,7 +16,7 @@ class InvertedIndex {
 public:
 
 	void Add(const string& document);
-	list<size_t> Lookup(const string& word) const;
+	vector<pair<size_t, size_t>> Lookup(const string& word) const;
 
 	const string& GetDocument(size_t id) const {
 		return docs[id];
@@ -27,7 +27,8 @@ public:
 	}
 
 private:
-	map<string, list<size_t>> index;
+	map<string, vector<pair<size_t, size_t>>> index;
+	map<string, map<size_t, size_t>> word_docid_index_map;
 	vector<string> docs;
 
 };
@@ -44,7 +45,7 @@ public:
 
 private:
 	InvertedIndex index;
-	TotalDuration docs_rating_count_duration;
-	TotalDuration docs_sort_by_rating_duration;
-	TotalDuration send_search_results_duration;
+	//TotalDuration docs_rating_count_duration;
+	//TotalDuration docs_sort_by_rating_duration;
+	//TotalDuration send_search_results_duration;
 };
