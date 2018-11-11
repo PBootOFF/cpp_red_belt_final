@@ -20,7 +20,7 @@
 #include <chrono>
 
 
-//#include "durations.cpp"
+#include "durations.cpp"
 
 using namespace std;
 
@@ -34,7 +34,11 @@ class InvertedIndex {
 public:
 
 	void Add(const string& document);
+<<<<<<< HEAD
 	vector<DocRating> Lookup(const string& word) const;
+=======
+	list<size_t> Lookup(const string& word) const;
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 
 	const string& GetDocument(size_t id) const {
 		return docs[id];
@@ -45,8 +49,12 @@ public:
 	}
 
 private:
+<<<<<<< HEAD
 	map<string, vector<DocRating>> index;
 	map<string, map<size_t, size_t>> word_docid_index_map;
+=======
+	map<string, list<size_t>> index;
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 	vector<string> docs;
 
 };
@@ -67,6 +75,7 @@ public:
 	void SendSearchResults(string& current_query, vector<DocRating>& sorted_docs, ostream& search_results_output);
 
 private:
+<<<<<<< HEAD
 	Synchronized<InvertedIndex> index;
 	vector<future<void>> base_update;
 	bool base_empty = true;
@@ -74,4 +83,10 @@ private:
 	//TotalDuration docs_rating_count_duration;
 	//TotalDuration docs_sort_by_rating_duration;
 	//TotalDuration send_search_results_duration;
+=======
+	InvertedIndex index;
+	TotalDuration docs_rating_count_duration;
+	TotalDuration docs_sort_by_rating_duration;
+	TotalDuration send_search_results_duration;
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 };

@@ -5,17 +5,25 @@ vector<string> SplitIntoWords(const string& line) {
 	return {istream_iterator<string>(words_input), istream_iterator<string>()};
 }
 
+<<<<<<< HEAD
 SearchServer::SearchServer()//:
 	//docs_rating_count_duration("Count docs rating"),
 	//docs_sort_by_rating_duration("Sort docs by rating"),
 	//send_search_results_duration("Send search results")
 {
 }
+=======
+SearchServer::SearchServer():
+	docs_rating_count_duration("Count docs rating"),
+	docs_sort_by_rating_duration("Sort docs by rating"),
+	send_search_results_duration("Send search results")
+{}
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 
-SearchServer::SearchServer(istream& document_input)//: 
-	//docs_rating_count_duration("Count docs rating"),
-	//docs_sort_by_rating_duration("Sort docs by rating"),
-	//send_search_results_duration("Send search results")
+SearchServer::SearchServer(istream& document_input): 
+	docs_rating_count_duration("Count docs rating"),
+	docs_sort_by_rating_duration("Sort docs by rating"),
+	send_search_results_duration("Send search results")
 {
 	UpdateDocumentBase(document_input);
 }
@@ -43,14 +51,20 @@ void SearchServer::UpdateDocumentBaseAsync(istream& document_input) {
 
 void SearchServer::DocsRatingCount(vector<DocRating>& docid_count, const vector<string>& words) {
 	
-	//ADD_DURATION(docs_rating_count_duration);
+	ADD_DURATION(docs_rating_count_duration);
 
 	for (const auto& word : words) {
+<<<<<<< HEAD
 		for (const DocRating docid_num : index.GetAccess().ref_to_value.Lookup(word)) {
 			if(docid_num.docid < docid_count.size()){
 				docid_count[docid_num.docid].docid = docid_num.docid;
 				docid_count[docid_num.docid].rating += docid_num.rating;
 			}
+=======
+		for (const size_t docid : index.Lookup(word)) {
+			docid_count[docid].first = docid;
+			docid_count[docid].second++;
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 		}
 	}
 	
@@ -58,7 +72,7 @@ void SearchServer::DocsRatingCount(vector<DocRating>& docid_count, const vector<
 
 void SearchServer::DocsSortByRating(vector<DocRating>& docid_count) {
 
-	//ADD_DURATION(docs_sort_by_rating_duration);
+	ADD_DURATION(docs_sort_by_rating_duration);
 
 	auto middle = docid_count.size() > 5 ? docid_count.begin() + 5 : docid_count.end();
 
@@ -81,7 +95,7 @@ void SearchServer::SendSearchResults(string& current_query,
 									 vector<DocRating>& sorted_docs,
 									 ostream& search_results_output) {
 
-	//ADD_DURATION(send_search_results_duration);
+	ADD_DURATION(send_search_results_duration);
 
 	search_results_output << current_query << ':';
 	for (auto[docid, hitcount] : Head(sorted_docs, 5)) {
@@ -99,6 +113,7 @@ void SearchServer::AddQueriesStream(
 	istream& query_input, ostream& search_results_output
 ) {
 
+<<<<<<< HEAD
 	//TotalDuration total_query_duration("Total");
 	//ADD_DURATION(total_query_duration);
 
@@ -118,6 +133,13 @@ void SearchServer::AddQueriesStreamAsync(
 	vector<DocRating> docid_count(index.GetAccess().ref_to_value.GetDocsNum());
 
 	for (string current_query; getline(query_input, current_query); ) {
+=======
+	vector<pair<size_t, size_t>> docid_count(index.GetDocsNum());
+
+	for (string current_query; getline(query_input, current_query); ) {
+
+		fill(docid_count.begin(), docid_count.end(), make_pair(0, 0));
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 
 		const auto words = SplitIntoWords(current_query);
 
@@ -131,11 +153,11 @@ void SearchServer::AddQueriesStreamAsync(
 }
 
 void InvertedIndex::Add(const string& document) {
-	
 	docs.push_back(document);
-	const size_t docid = docs.size() - 1;
 
+	const size_t docid = docs.size() - 1;
 	for (const auto& word : SplitIntoWords(document)) {
+<<<<<<< HEAD
 		if (word_docid_index_map.count(word) == 0) {
 			word_docid_index_map[word][docid] = 0;
 			index[word].push_back({docid, 1});
@@ -150,11 +172,17 @@ void InvertedIndex::Add(const string& document) {
 				index[word][docid_index].rating++;
 			}
 		}
+=======
+		index[word].push_back(docid);
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 	}
-
 }
 
+<<<<<<< HEAD
 vector<DocRating> InvertedIndex::Lookup(const string& word) const {
+=======
+list<size_t> InvertedIndex::Lookup(const string& word) const {
+>>>>>>> parent of 7bd52cc...  single-threaded version that meets performance requirements
 	if (auto it = index.find(word); it != index.end()) {
 		return it->second;
 	} else {
